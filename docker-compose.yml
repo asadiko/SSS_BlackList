@@ -1,0 +1,47 @@
+# Blacklist face-recognition microservice — standalone stack.
+# CPU-safe by default so it runs on ANY host; the service automatically uses
+# the GPU when one is exposed to the container.
+#
+#   docker compose up --build -d               # run the service
+#   docker compose run --rm blacklist-test     # run the test-suite
+#
+# To expose the GPU (needs the NVIDIA container runtime):
+#   docker compose -f docker-compose.yml -f docker-compose.gpu.yml up --build -d
+#
+# Camera sources come from the SSS camera registry. Override with:
+#   CAMERAS_FILE=/path/to/cameras.yaml docker compose up -d
+services:
+
+  blacklist:
+    build: .
+    image: sss-blacklist:latest
+    restart: unless-stopped
+    ports:
+      - "8100:8100"
+    environment:
+      # Alert forwarding to the operator backend (empty → disabled)
+      - BACKEND_URL=${BACKEND_URL:-}
+      - BACKEND_SERVICE_TOKEN=${BACKEND_SERVICE_TOKEN:-}
+      # Optional API auth (empty → open; set for prod)
+      - BL_API_KEY=${BL_API_KEY:-}
+    volumes:
+      # Shared camera registry (defaults to the sibling SSS project's file)
+      - ${CAMERAS_FILE:-../ShopliftingSecuritySystem_SSS/cameras.yaml}:/app/cameras.yaml:ro
+      - blacklist_data:/data
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8100/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 60s
+
+  blacklist-test:
+    build: .
+    image: sss-blacklist:latest
+    environment:
+      - BL_DATA_DIR=/tmp/bl-test-data
+    command: ["sh", "-c", "pip install -q -r dev-requirements.txt && python -m pytest tests/ -v"]
+    restart: "no"
+
+volumes:
+  blacklist_data:

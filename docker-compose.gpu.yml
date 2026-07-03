@@ -1,0 +1,12 @@
+# GPU override for the standalone compose — requires the NVIDIA container
+# runtime on the host. Usage:
+#   docker compose -f docker-compose.yml -f docker-compose.gpu.yml up
+services:
+  blacklist:
+    deploy:
+      resources:
+        reservations:
+          devices:
+            - driver: nvidia
+              count: 1
+              capabilities: [gpu]

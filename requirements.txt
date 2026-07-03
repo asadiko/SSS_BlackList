@@ -1,0 +1,12 @@
+# Core (hard) dependencies — the service refuses to build without these.
+fastapi>=0.110
+uvicorn>=0.29
+python-multipart>=0.0.9
+pyyaml>=6.0
+numpy>=1.24,<2
+opencv-python-headless>=4.9
+# onnxruntime-gpu 1.19–1.22 ship CUDA 12 / cuDNN 9 wheels (matching the
+# nvidia/cuda:12.4 base image) and fall back to the CPU execution provider
+# automatically when no GPU is present. 1.23+ links against CUDA 13 — do not
+# bump without also bumping the base image.
+onnxruntime-gpu>=1.19,<1.23
